@@ -87,7 +87,7 @@ int hairpin_flow_forward_setup(struct __ctx_buff *ctx)
 	ethhdr__set_macs(l2, src, dst);
 
 	/* Push IPv4 header */
-	l3 = pktgen__push_default_iphdr(&builder);
+	l3 = pktgen__push_default_iphdr(&builder, 0);
 
 	if (!l3)
 		return TEST_ERROR;
@@ -227,7 +227,7 @@ int hairpin_flow_rev_setup(struct __ctx_buff *ctx)
 	ethhdr__set_macs(l2, src, dst);
 
 	/* Push IPv4 header */
-	l3 = pktgen__push_default_iphdr(&builder);
+	l3 = pktgen__push_default_iphdr(&builder, 0);
 
 	if (!l3)
 		return TEST_ERROR;

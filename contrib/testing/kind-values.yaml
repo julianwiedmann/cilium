@@ -14,11 +14,14 @@ operator:
 ipam:
   mode: kubernetes
 ipv6:
-  enabled: true
+  enabled: false
 ipv4:
   enabled: true
-bpf:
-  monitorAggregation: none
+loadBalancer:
+  mode: dsr
+tunnel: disabled
+ipv4NativeRoutingCIDR: 10.244.0.0/16
+autoDirectNodeRoutes: true
 livenessProbe:
   failureThreshold: 9999
 readinessProbe:

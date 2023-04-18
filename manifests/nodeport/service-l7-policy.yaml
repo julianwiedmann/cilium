@@ -1,0 +1,91 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: cilium-test
+  labels:
+    name: cilium-test
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: testds-l7-policy
+  namespace: cilium-test
+spec:
+  selector:
+    matchLabels:
+      zgroup: nodeport-backend-l7-policy
+  template:
+    metadata:
+      labels:
+        zgroup: nodeport-backend-l7-policy
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: kind-worker3
+      containers:
+      - name: web
+        image: quay.io/cilium/echoserver:1.10.1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+---
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: "l7-policy-demo"
+  namespace: cilium-test
+spec:
+  description: "L7 policy for allowing all traffic via proxy in demo DS"
+  endpointSelector:
+    matchLabels:
+      zgroup: nodeport-backend-l7-policy
+  ingress:
+  - toPorts:
+    - ports:
+      - port: "80"
+        protocol: TCP
+      rules:
+        http:
+        - {}
+    - ports:
+      # we allow tftp traffic to bypass the proxy
+      - port: "69"
+        protocol: UDP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-nodeport-l7-policy
+  namespace: cilium-test
+spec:
+  type: NodePort
+  ipFamilyPolicy: PreferDualStack
+  ports:
+  - port: 10082
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    zgroup: nodeport-backend-l7-policy
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-nodeport-l7-policy-local
+  namespace: cilium-test
+spec:
+  type: NodePort
+  ipFamilyPolicy: PreferDualStack
+  externalTrafficPolicy: Local
+  ports:
+  - port: 10083
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    zgroup: nodeport-backend-l7-policy
+
+

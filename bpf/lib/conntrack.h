@@ -999,7 +999,7 @@ static __always_inline int ct_create4(const void *map_main,
 		goto err_ct_fill_up;
 
 #ifndef DISABLE_LOOPBACK_LB
-	if (dir == CT_EGRESS && ct_state->addr && ct_state->loopback) {
+	if (dir == CT_EGRESS && ct_state->loopback) {
 		__u8 flags = tuple->flags;
 		__be32 saddr, daddr;
 

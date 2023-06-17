@@ -148,7 +148,7 @@ not_esp:
 			return hdrlen;
 
 		return ipv6_local_delivery(ctx, l3_off, *identity, ep,
-					   METRIC_INGRESS, false, false);
+					   METRIC_INGRESS, false);
 	}
 
 	/* A packet entering the node from the tunnel and not going to a local

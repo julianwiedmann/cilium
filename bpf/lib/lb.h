@@ -1649,7 +1649,6 @@ static __always_inline int lb4_local(const void *map, struct __ctx_buff *ctx,
 	if (saddr == backend->address) {
 		new_saddr = IPV4_LOOPBACK;
 		state->loopback = 1;
-		state->svc_addr = saddr;
 	}
 
 	if (!state->loopback)

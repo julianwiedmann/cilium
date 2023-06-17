@@ -1001,10 +1001,6 @@ static __always_inline int ct_create4(const void *map_main,
 #ifndef DISABLE_LOOPBACK_LB
 	if (dir == CT_EGRESS && ct_state->loopback) {
 		__u8 flags = tuple->flags;
-		__be32 saddr, daddr;
-
-		saddr = tuple->saddr;
-		daddr = tuple->daddr;
 
 		/* We are looping back into the origin endpoint through a
 		 * service. Set up a conntrack tuple for the reply to ensure we
@@ -1012,15 +1008,11 @@ static __always_inline int ct_create4(const void *map_main,
 		 * address which will not point back to the right source.
 		 */
 		tuple->flags = TUPLE_F_IN;
-		tuple->saddr = ct_state->svc_addr;
-		tuple->daddr = ct_state->addr;
 
 		err = map_update_elem(map_main, tuple, &entry, 0);
 		if (unlikely(err < 0))
 			goto err_ct_fill_up;
 
-		tuple->saddr = saddr;
-		tuple->daddr = daddr;
 		tuple->flags = flags;
 	}
 #endif

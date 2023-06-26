@@ -367,7 +367,7 @@ static __always_inline int handle_ipv6_from_lxc(struct __ctx_buff *ctx, __u32 *d
 	struct ct_buffer6 *ct_buffer;
 	void *data, *data_end;
 	struct ipv6hdr *ip6;
-	int ret, verdict, l4_off, hdrlen, zero = 0;
+	int ret, verdict, zero = 0;
 	struct trace_ctx trace = {
 		.reason = TRACE_REASON_UNKNOWN,
 		.monitor = 0,
@@ -508,16 +508,18 @@ ct_recreate6:
 	case CT_REPLY:
 		policy_mark_skip(ctx);
 
-		hdrlen = ipv6_hdrlen(ctx, &tuple->nexthdr);
-		if (hdrlen < 0)
-			return hdrlen;
-
-		l4_off = ETH_HLEN + hdrlen;
-
 #ifdef ENABLE_NODEPORT
 # ifdef ENABLE_DSR
 		/* See comment in handle_ipv4_from_lxc(). */
 		if (ct_state->dsr) {
+			int hdrlen, l4_off;
+
+			hdrlen = ipv6_hdrlen(ctx, &tuple->nexthdr);
+			if (hdrlen < 0)
+				return hdrlen;
+
+			l4_off = ETH_HLEN + hdrlen;
+
 			ret = xlate_dsr_v6(ctx, tuple, l4_off);
 			if (ret != 0)
 				return ret;
@@ -534,14 +536,7 @@ ct_recreate6:
 		}
 #endif /* ENABLE_NODEPORT */
 
-		if (ct_state->rev_nat_index) {
-			ret = lb6_rev_nat(ctx, l4_off,
-					  ct_state->rev_nat_index, tuple, 0);
-			if (IS_ERR(ret))
-				return ret;
-		}
 		break;
-
 	default:
 		return DROP_UNKNOWN_CT;
 	}
@@ -974,7 +969,7 @@ ct_recreate4:
 
 #endif /* ENABLE_NODEPORT */
 
-		if (ct_state->rev_nat_index) {
+		if (ct_state->rev_nat_index && ct_state->loopback) {
 			ret = lb4_rev_nat(ctx, ETH_HLEN, l4_off,
 					  ct_state, tuple, 0, has_l4_header);
 			if (IS_ERR(ret))

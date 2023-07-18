@@ -2558,11 +2558,26 @@ func (c *DaemonConfig) TunnelingEnabled() bool {
 
 // TunnelDevice returns cilium_{vxlan,geneve} depending on the config or "" if disabled.
 func (c *DaemonConfig) TunnelDevice() string {
-	if c.TunnelingEnabled() {
+	if c.TunnelProtocol != TunnelDisabled {
 		return fmt.Sprintf("cilium_%s", c.TunnelProtocol)
 	} else {
 		return ""
 	}
+}
+
+// SelectAdHocTunnelProtocol picks the tunnel protocol when tunneling is disabled,
+// but some option requires an ad-hoc tunnel. Returns TunnelDisabled otherwise.
+func (c *DaemonConfig) SelectAdHocTunnelProtocol() string {
+	if c.EnableIPv4EgressGateway || c.EnableHighScaleIPcache {
+		return c.TunnelProtocol
+	}
+
+	if (c.EnableNodePort || (c.KubeProxyReplacement == KubeProxyReplacementStrict || c.KubeProxyReplacement == KubeProxyReplacementTrue)) &&
+		c.LoadBalancerUsesDSR() && c.LoadBalancerDSRDispatch == DSRDispatchGeneve {
+		return TunnelGeneve
+	}
+
+	return TunnelDisabled
 }
 
 // TunnelExists returns true if some traffic may go through a tunnel, including
@@ -2813,6 +2828,10 @@ func (c *DaemonConfig) Validate(vp *viper.Viper) error {
 	}
 
 	switch c.TunnelProtocol {
+	case TunnelDisabled:
+		if c.TunnelingEnabled() {
+			return fmt.Errorf("tunnel protocol %q is invalid when using tunnel routing", TunnelDisabled)
+		}
 	case TunnelVXLAN, TunnelGeneve:
 	default:
 		return fmt.Errorf("invalid tunnel protocol %q", c.TunnelProtocol)
@@ -3178,23 +3197,6 @@ func (c *DaemonConfig) Populate(vp *viper.Viper) {
 	c.RoutingMode = vp.GetString(RoutingMode)
 	c.TunnelProtocol = vp.GetString(TunnelProtocol)
 	c.TunnelPort = vp.GetInt(TunnelPortName)
-
-	if c.TunnelPort == 0 {
-		// manually pick port for native-routing and DSR with Geneve dispatch:
-		if !c.TunnelingEnabled() &&
-			(c.EnableNodePort || (c.KubeProxyReplacement == KubeProxyReplacementStrict || c.KubeProxyReplacement == KubeProxyReplacementTrue)) &&
-			c.LoadBalancerUsesDSR() &&
-			c.LoadBalancerDSRDispatch == DSRDispatchGeneve {
-			c.TunnelPort = defaults.TunnelPortGeneve
-		} else {
-			switch c.TunnelProtocol {
-			case TunnelVXLAN:
-				c.TunnelPort = defaults.TunnelPortVXLAN
-			case TunnelGeneve:
-				c.TunnelPort = defaults.TunnelPortGeneve
-			}
-		}
-	}
 
 	if vp.IsSet(AddressScopeMax) {
 		c.AddressScopeMax, err = ip.ParseScope(vp.GetString(AddressScopeMax))

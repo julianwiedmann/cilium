@@ -1373,6 +1373,19 @@ func initEnv(vp *viper.Viper) {
 		log.Fatalf("%s cannot be used with tunneling. Packets must be routed through the tunnel device.", option.EnableAutoDirectRoutingName)
 	}
 
+	if !option.Config.TunnelingEnabled() {
+		option.Config.TunnelProtocol = option.Config.SelectAdHocTunnelProtocol()
+	}
+
+	if option.Config.TunnelPort == 0 {
+		switch option.TunnelProtocol {
+		case option.TunnelVXLAN:
+			option.Config.TunnelPort = defaults.TunnelPortVXLAN
+		case option.TunnelGeneve:
+			option.Config.TunnelPort = defaults.TunnelPortGeneve
+		}
+	}
+
 	initClockSourceOption()
 
 	if option.Config.EnableSRv6 {

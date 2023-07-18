@@ -312,13 +312,14 @@ func (l *Loader) Reinitialize(ctx context.Context, o datapath.BaseProgramOwner, 
 	l.init(o.Datapath(), o.LocalConfig())
 
 	var mode baseDeviceMode
-	encapProto := option.TunnelDisabled
+	encapProto := option.Config.TunnelProtocol
+
 	switch {
 	case option.Config.TunnelingEnabled():
 		mode = tunnelMode
-		encapProto = option.Config.TunnelProtocol
 	case option.Config.EnableHealthDatapath:
 		mode = option.DSRDispatchIPIP
+		encapProto = option.TunnelDisabled
 		sysSettings = append(sysSettings,
 			sysctl.Setting{Name: "net.core.fb_tunnels_only_for_init_net",
 				Val: "2", IgnoreErr: true})
@@ -406,20 +407,6 @@ func (l *Loader) Reinitialize(ctx context.Context, o datapath.BaseProgramOwner, 
 	args[initArgCgroupRoot] = "<nil>"
 	args[initArgBpffsRoot] = "<nil>"
 	args[initArgDevices] = "<nil>"
-
-	if !option.Config.TunnelingEnabled() {
-		if option.Config.EnableIPv4EgressGateway || option.Config.EnableHighScaleIPcache {
-			// Tunnel is required for egress traffic under this config
-			encapProto = option.Config.TunnelProtocol
-		}
-	}
-
-	if !option.Config.TunnelingEnabled() &&
-		option.Config.EnableNodePort &&
-		option.Config.LoadBalancerUsesDSR() &&
-		option.Config.LoadBalancerDSRDispatch == option.DSRDispatchGeneve {
-		encapProto = option.TunnelGeneve
-	}
 
 	// set init.sh args based on encapProto
 	args[initArgTunnelProtocol] = "<nil>"

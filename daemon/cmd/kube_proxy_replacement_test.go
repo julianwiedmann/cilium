@@ -233,7 +233,7 @@ func (s *KPRSuite) TestInitKubeProxyReplacementOptions(c *C) {
 				enableSocketLBTracing:      true,
 			},
 		},
-		// Node port DSR mode + vxlan tunneling: error as they're incompatible
+		// Node port DSR mode + IP-OPT dispatch + vxlan routing: error as they're incompatible
 		{
 			"node-port-dsr-mode+vxlan",
 			func(cfg *kprConfig) {
@@ -244,7 +244,29 @@ func (s *KPRSuite) TestInitKubeProxyReplacementOptions(c *C) {
 				cfg.dispatchMode = option.DSRDispatchOption
 			},
 			kprConfig{
-				expectedErrorRegex:      "Node Port .+ mode cannot be used with .+ tunneling.",
+				expectedErrorRegex:      "Tunnel routing with Node Port .+ mode requires .+ dispatch.",
+				enableSocketLB:          true,
+				enableNodePort:          true,
+				enableHostPort:          true,
+				enableExternalIPs:       true,
+				enableSessionAffinity:   true,
+				enableHostLegacyRouting: false,
+				enableSocketLBTracing:   true,
+			},
+		},
+
+		// Node port DSR mode + IP-OPT dispatch + geneve routing: error as they're incompatible
+		{
+			"node-port-dsr-mode+vxlan",
+			func(cfg *kprConfig) {
+				cfg.kubeProxyReplacement = option.KubeProxyReplacementTrue
+				cfg.routingMode = option.RoutingModeTunnel
+				cfg.tunnelProtocol = option.TunnelGeneve
+				cfg.nodePortMode = option.NodePortModeDSR
+				cfg.dispatchMode = option.DSRDispatchOption
+			},
+			kprConfig{
+				expectedErrorRegex:      "Tunnel routing with Node Port .+ mode requires .+ dispatch.",
 				enableSocketLB:          true,
 				enableNodePort:          true,
 				enableHostPort:          true,
@@ -261,6 +283,7 @@ func (s *KPRSuite) TestInitKubeProxyReplacementOptions(c *C) {
 			func(cfg *kprConfig) {
 				cfg.kubeProxyReplacement = option.KubeProxyReplacementTrue
 				cfg.routingMode = option.RoutingModeNative
+				cfg.tunnelProtocol = option.TunnelGeneve
 				cfg.nodePortMode = option.NodePortModeDSR
 				cfg.dispatchMode = option.DSRDispatchGeneve
 			},
@@ -305,7 +328,7 @@ func (s *KPRSuite) TestInitKubeProxyReplacementOptions(c *C) {
 				cfg.dispatchMode = option.DSRDispatchGeneve
 			},
 			kprConfig{
-				expectedErrorRegex:      "Node Port .+ mode cannot be used with .+ tunneling.",
+				expectedErrorRegex:      "Node Port .+ mode with .+ dispatch requires .+ tunnel protocol.",
 				enableSocketLB:          true,
 				enableNodePort:          true,
 				enableHostPort:          true,
@@ -322,6 +345,7 @@ func (s *KPRSuite) TestInitKubeProxyReplacementOptions(c *C) {
 			func(cfg *kprConfig) {
 				cfg.kubeProxyReplacement = option.KubeProxyReplacementTrue
 				cfg.routingMode = option.RoutingModeNative
+				cfg.tunnelProtocol = option.TunnelGeneve
 				cfg.nodePortMode = option.NodePortModeHybrid
 				cfg.dispatchMode = option.DSRDispatchGeneve
 			},
@@ -366,7 +390,7 @@ func (s *KPRSuite) TestInitKubeProxyReplacementOptions(c *C) {
 				cfg.dispatchMode = option.DSRDispatchGeneve
 			},
 			kprConfig{
-				expectedErrorRegex:      "Node Port .+ mode cannot be used with .+ tunneling.",
+				expectedErrorRegex:      "Node Port .+ mode with .+ dispatch requires .+ tunnel protocol.",
 				enableSocketLB:          true,
 				enableNodePort:          true,
 				enableHostPort:          true,

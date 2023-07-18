@@ -137,21 +137,15 @@ func (h *HeaderfileWriter) WriteNodeConfig(w io.Writer, cfg *datapath.LocalNodeC
 		fw.WriteString(defineIPv6("HOST_IP", hostIP))
 	}
 
-	for t, id := range tunnelProtocols {
-		macroName := fmt.Sprintf("TUNNEL_PROTOCOL_%s", strings.ToUpper(t))
-		cDefinesMap[macroName] = fmt.Sprintf("%d", id)
-	}
+	if option.Config.TunnelProtocol != option.TunnelDisabled {
+		for t, id := range tunnelProtocols {
+			macroName := fmt.Sprintf("TUNNEL_PROTOCOL_%s", strings.ToUpper(t))
+			cDefinesMap[macroName] = fmt.Sprintf("%d", id)
+		}
 
-	encapProto := option.Config.TunnelProtocol
-	if !option.Config.TunnelingEnabled() &&
-		option.Config.EnableNodePort &&
-		option.Config.LoadBalancerUsesDSR() &&
-		option.Config.LoadBalancerDSRDispatch == option.DSRDispatchGeneve {
-		encapProto = option.TunnelGeneve
+		cDefinesMap["TUNNEL_PROTOCOL"] = fmt.Sprintf("%d", tunnelProtocols[option.Config.TunnelProtocol])
+		cDefinesMap["TUNNEL_PORT"] = fmt.Sprintf("%d", option.Config.TunnelPort)
 	}
-
-	cDefinesMap["TUNNEL_PROTOCOL"] = fmt.Sprintf("%d", tunnelProtocols[encapProto])
-	cDefinesMap["TUNNEL_PORT"] = fmt.Sprintf("%d", option.Config.TunnelPort)
 
 	cDefinesMap["HOST_ID"] = fmt.Sprintf("%d", identity.GetReservedID(labels.IDNameHost))
 	cDefinesMap["WORLD_ID"] = fmt.Sprintf("%d", identity.GetReservedID(labels.IDNameWorld))

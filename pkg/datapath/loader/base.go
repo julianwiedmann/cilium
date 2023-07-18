@@ -317,7 +317,8 @@ func (l *Loader) Reinitialize(ctx context.Context, o datapath.BaseProgramOwner, 
 	case option.Config.TunnelingEnabled():
 		mode = tunnelMode
 		encapProto = option.Config.TunnelProtocol
-	case option.Config.EnableHealthDatapath:
+	case option.Config.EnableHealthDatapath &&
+		option.Config.LoadBalancerDSRDispatch == option.DSRDispatchIPIP:
 		mode = option.DSRDispatchIPIP
 	default:
 		mode = directMode

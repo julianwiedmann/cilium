@@ -2739,6 +2739,11 @@ func (c *DaemonConfig) DirectRoutingDeviceRequired() bool {
 	return (c.EnableNodePort || BPFHostRoutingEnabled || Config.EnableWireguard) && !c.TunnelingEnabled()
 }
 
+func (c *DaemonConfig) LoadBalancerUsesDSR() bool {
+	return c.NodePortMode == NodePortModeDSR ||
+		c.NodePortMode == NodePortModeHybrid
+}
+
 func (c *DaemonConfig) validateIPv6ClusterAllocCIDR() error {
 	ip, cidr, err := net.ParseCIDR(c.IPv6ClusterAllocCIDR)
 	if err != nil {
@@ -3178,7 +3183,7 @@ func (c *DaemonConfig) Populate(vp *viper.Viper) {
 		// manually pick port for native-routing and DSR with Geneve dispatch:
 		if !c.TunnelingEnabled() &&
 			(c.EnableNodePort || (c.KubeProxyReplacement == KubeProxyReplacementStrict || c.KubeProxyReplacement == KubeProxyReplacementTrue)) &&
-			c.NodePortMode != NodePortModeSNAT &&
+			c.LoadBalancerUsesDSR() &&
 			c.LoadBalancerDSRDispatch == DSRDispatchGeneve {
 			c.TunnelPort = defaults.TunnelPortGeneve
 		} else {

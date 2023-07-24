@@ -647,10 +647,35 @@ ct_recreate6:
 	}
 #endif
 	if (is_defined(ENABLE_HOST_ROUTING)) {
+		struct bpf_fib_lookup_padded fib_params = {
+			.l = {
+				.family		= AF_INET6,
+				.ifindex	= ctx_get_ifindex(ctx),
+			},
+		};
 		int oif = 0;
 
-		ret = fib_redirect_v6(ctx, ETH_HLEN, ip6, false, ext_err,
-				      ctx_get_ifindex(ctx), &oif);
+		ipv6_addr_copy((union v6addr *)&fib_params.l.ipv6_src,
+			       (union v6addr *)&ip6->saddr);
+		ipv6_addr_copy((union v6addr *)&fib_params.l.ipv6_dst,
+			       (union v6addr *)&ip6->daddr);
+
+		ret = ipv6_l3(ctx, ETH_HLEN, NULL, NULL, METRIC_EGRESS);
+		if (unlikely(ret != CTX_ACT_OK))
+			return ret;
+
+# if defined(ENABLE_NODEPORT) && !defined(ENABLE_SKIP_FIB)
+		if (ct_status == CT_REPLY) {
+			struct lb6_reverse_nat *nat_info;
+
+			nat_info = nodeport_rev_dnat_get_info_ipv6(ctx, tuple);
+			if (nat_info)
+				ipv6_addr_copy((union v6addr *)&fib_params.l.ipv6_src,
+					       &nat_info->address);
+		}
+# endif
+
+		ret = fib_redirect(ctx, false, &fib_params, ext_err, &oif);
 		if (fib_ok(ret))
 			send_trace_notify(ctx, TRACE_TO_NETWORK, SECLABEL,
 					  *dst_sec_identity, 0, oif,
@@ -1184,10 +1209,31 @@ skip_vtep:
 	}
 #endif /* TUNNEL_MODE || ENABLE_HIGH_SCALE_IPCACHE */
 	if (is_defined(ENABLE_HOST_ROUTING)) {
+		struct bpf_fib_lookup_padded fib_params = {
+			.l = {
+				.family		= AF_INET,
+				.ifindex	= ctx_get_ifindex(ctx),
+				.ipv4_src	= ip4->saddr,
+				.ipv4_dst	= ip4->daddr,
+			},
+		};
 		int oif = 0;
 
-		ret = fib_redirect_v4(ctx, ETH_HLEN, ip4, false, ext_err,
-				      ctx_get_ifindex(ctx), &oif);
+		ret = ipv4_l3(ctx, ETH_HLEN, NULL, NULL, ip4);
+		if (unlikely(ret != CTX_ACT_OK))
+			return ret;
+
+# if defined(ENABLE_NODEPORT) && !defined(ENABLE_SKIP_FIB)
+		if (ct_status == CT_REPLY) {
+			struct lb4_reverse_nat *nat_info;
+
+			nat_info = nodeport_rev_dnat_get_info_ipv4(ctx, tuple);
+			if (nat_info)
+				fib_params.l.ipv4_src = nat_info->address;
+		}
+# endif
+
+		ret = fib_redirect(ctx, false, &fib_params, ext_err, &oif);
 		if (fib_ok(ret))
 			send_trace_notify(ctx, TRACE_TO_NETWORK, SECLABEL,
 					  *dst_sec_identity, 0, oif,

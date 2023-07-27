@@ -39,6 +39,12 @@ static __always_inline __maybe_unused bool is_v6_loopback(const union v6addr *da
 	return ipv6_addr_equals(&loopback, daddr);
 }
 
+static __always_inline __maybe_unused
+void ctx_set_v4_address(struct bpf_sock_addr *ctx, __be32 addr)
+{
+	ctx->user_ip4 = addr;
+}
+
 /* Hack due to missing narrow ctx access. */
 static __always_inline __maybe_unused __be16
 ctx_dst_port(const struct bpf_sock_addr *ctx)
@@ -444,6 +450,16 @@ __sock4_health_fwd(struct bpf_sock_addr *ctx __maybe_unused)
 	if (!lb_skip_l4_dnat())
 		val = map_lookup_elem(&LB4_HEALTH_MAP, &key);
 	if (val) {
+# if defined(ENABLE_DSR) && DSR_ENCAP_MODE == DSR_ENCAP_GENEVE
+		val->svc_addr = ctx->user_ip4;
+		val->svc_port = ctx_dst_port(ctx);
+
+		if (map_update_elem(&LB4_HEALTH_MAP, &key, val, 0) < 0)
+			return SYS_REJECT;
+
+		ctx_set_v4_address(ctx, val->peer.address);
+# endif
+
 		ctx_set_port(ctx, val->peer.port);
 		ret = SYS_PROCEED;
 	}
@@ -1100,6 +1116,16 @@ __sock6_health_fwd(struct bpf_sock_addr *ctx __maybe_unused)
 		if (!lb_skip_l4_dnat())
 			val = map_lookup_elem(&LB6_HEALTH_MAP, &key);
 		if (val) {
+# if defined(ENABLE_DSR) && DSR_ENCAP_MODE == DSR_ENCAP_GENEVE
+			ctx_get_v6_address(ctx, &val->svc_addr);
+			val->svc_port = ctx_dst_port(ctx);
+
+			if (map_update_elem(&LB6_HEALTH_MAP, &key, val, 0) < 0)
+				return SYS_REJECT;
+
+			ctx_set_v6_address(ctx, &val->peer.address);
+# endif
+
 			ctx_set_port(ctx, val->peer.port);
 			ret = SYS_PROCEED;
 		}

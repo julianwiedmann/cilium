@@ -979,6 +979,8 @@ struct lb6_backend {
 
 struct lb6_health {
 	struct lb6_backend peer;
+	union v6addr svc_addr;
+	__be16 svc_port;
 };
 
 struct lb6_reverse_nat {
@@ -1038,6 +1040,8 @@ struct lb4_backend {
 
 struct lb4_health {
 	struct lb4_backend peer;
+	__be32 svc_addr;
+	__be16 svc_port;
 };
 
 struct lb4_reverse_nat {

@@ -3118,6 +3118,73 @@ health_encap_v6(struct __ctx_buff *ctx, const struct lb6_health *val,
 
 	return ctx_redirect(ctx, ENCAP6_IFINDEX, 0);
 }
+# elif DSR_ENCAP_MODE == DSR_ENCAP_GENEVE
+static __always_inline int
+health_encap_v4(struct __ctx_buff *ctx, const struct lb4_health *val,
+		__u32 src_sec_identity)
+{
+	struct remote_endpoint_info *info __maybe_unused;
+	struct geneve_dsr_opt4 opt;
+	__be32 tunnel_endpoint;
+	__u32 dst_sec_identity;
+	void *data, *data_end;
+	bool need_opt = true;
+	int ifindex = 0, ret;
+	struct iphdr *ip4;
+
+#ifdef ENABLE_HIGH_SCALE_IPCACHE
+	tunnel_endpoint = val->peer.address;
+	dst_sec_identity = 0;
+#else
+	info = lookup_ip4_remote_endpoint(val->peer.address, 0);
+	if (!info || info->tunnel_endpoint == 0)
+		return DROP_NO_TUNNEL_ENDPOINT;
+
+	tunnel_endpoint = info->tunnel_endpoint;
+	dst_sec_identity = info->sec_identity;
+#endif
+
+	if (!revalidate_data(ctx, &data, &data_end, &ip4))
+		return DROP_INVALID;
+
+	if (ip4->protocol == IPPROTO_TCP) {
+		int l4_off = ETH_HLEN + ipv4_hdrlen(ip4);
+		union tcp_flags tcp_flags = {};
+
+		if (l4_load_tcp_flags(ctx, l4_off, &tcp_flags) < 0)
+			return DROP_CT_INVALID_HDR;
+
+		if (!(tcp_flags.value & TCP_FLAG_SYN))
+			need_opt = false;
+	}
+
+	if (need_opt) {
+		set_geneve_dsr_opt4(val->svc_port, val->svc_addr, &opt);
+		ret = nodeport_add_tunnel_encap_opt(ctx, 0, 0, tunnel_endpoint,
+						    src_sec_identity, dst_sec_identity,
+						    &opt, sizeof(opt),
+						    (enum trace_reason)CT_NEW,
+						    TRACE_PAYLOAD_LEN, &ifindex);
+	} else {
+		ret = nodeport_add_tunnel_encap(ctx, 0, 0, tunnel_endpoint,
+						src_sec_identity, dst_sec_identity,
+						(enum trace_reason)CT_NEW,
+						TRACE_PAYLOAD_LEN, &ifindex);
+	}
+
+	if (IS_ERR(ret))
+		return ret;
+
+	return ctx_redirect(ctx, ifindex, 0);
+}
+
+static __always_inline int
+health_encap_v6(struct __ctx_buff *ctx __maybe_unused,
+		const struct lb6_health *val __maybe_unused,
+		__u32 seclabel __maybe_unused)
+{
+	return DROP_NO_TUNNEL_ENDPOINT;
+}
 # else
 # error "Invalid load balancer DSR encapsulation mode for LB Health-check!"
 # endif

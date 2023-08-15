@@ -433,7 +433,7 @@ out:
 		return -ENOMEM;
 	}
 
-	ctx->user_ip4 = backend->address;
+	ctx_set_v4_address(ctx, backend->address);
 	ctx_set_port(ctx, backend->port);
 
 	return 0;
@@ -541,7 +541,7 @@ int cil_sock4_post_bind(struct bpf_sock *ctx)
 #ifdef ENABLE_HEALTH_CHECK
 static __always_inline void sock4_auto_bind(struct bpf_sock_addr *ctx)
 {
-	ctx->user_ip4 = 0;
+	ctx_set_v4_address(ctx, 0);
 	ctx_set_port(ctx, 0);
 }
 
@@ -617,7 +617,7 @@ static __always_inline int __sock4_xlate_rev(struct bpf_sock_addr *ctx,
 			return -ENOENT;
 		}
 
-		ctx->user_ip4 = val->address;
+		ctx_set_v4_address(ctx, val->address);
 		ctx_set_port(ctx, val->port);
 		send_trace_sock_notify4(ctx_full, XLATE_POST_DIRECTION_REV, val->address,
 					bpf_ntohs(val->port));

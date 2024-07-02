@@ -147,7 +147,7 @@ not_esp:
 	ep = lookup_ip6_endpoint(ip6);
 	if (ep && !(ep->flags & ENDPOINT_MASK_HOST_DELIVERY))
 		return ipv6_local_delivery(ctx, l3_off, *identity, MARK_MAGIC_IDENTITY,
-					   ep, METRIC_INGRESS, false, true);
+					   ep, METRIC_INGRESS, false, true, ???);
 
 	/* A packet entering the node from the tunnel and not going to a local
 	 * endpoint has to be going to the local host.
@@ -258,7 +258,7 @@ static __always_inline int handle_inter_cluster_revsnat(struct __ctx_buff *ctx,
 		return ipv4_local_delivery(ctx, ETH_HLEN, src_sec_identity,
 					   MARK_MAGIC_IDENTITY, ip4, ep,
 					   METRIC_INGRESS, false, true,
-					   cluster_id);
+					   ???, cluster_id);
 	}
 
 	return DROP_UNROUTABLE;
@@ -463,7 +463,8 @@ not_esp:
 	ep = lookup_ip4_endpoint(ip4);
 	if (ep && !(ep->flags & ENDPOINT_MASK_HOST_DELIVERY))
 		return ipv4_local_delivery(ctx, ETH_HLEN, *identity, MARK_MAGIC_IDENTITY,
-					   ip4, ep, METRIC_INGRESS, false, true, 0);
+					   ip4, ep, METRIC_INGRESS, false, true,
+					   ???, 0);
 
 	ret = overlay_ingress_policy_hook(ctx, ip4, *identity, ext_err);
 	if (ret != CTX_ACT_OK)

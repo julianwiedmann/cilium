@@ -197,9 +197,9 @@ _send_trace_notify(struct __ctx_buff *ctx, enum trace_point obs_point,
 		   __u32 src, __u32 dst, __u16 dst_id, __u32 ifindex,
 		   enum trace_reason reason, __u32 monitor, __u16 line, __u8 file)
 {
+	__u64 payload_len = TRACE_PAYLOAD_LEN + (ctx_is_overlay(ctx) ? 50 : 0);
 	__u64 ctx_len = ctx_full_len(ctx);
-	__u64 cap_len = min_t(__u64, monitor ? : TRACE_PAYLOAD_LEN,
-			      ctx_len);
+	__u64 cap_len = min_t(__u64, monitor ? : payload_len, ctx_len);
 	struct ratelimit_key rkey = {
 		.usage = RATELIMIT_USAGE_EVENTS_MAP,
 	};
@@ -241,9 +241,9 @@ send_trace_notify4(struct __ctx_buff *ctx, enum trace_point obs_point,
 		   __u32 src, __u32 dst, __be32 orig_addr, __u16 dst_id,
 		   __u32 ifindex, enum trace_reason reason, __u32 monitor)
 {
+	__u64 payload_len = TRACE_PAYLOAD_LEN + (ctx_is_overlay(ctx) ? 50 : 0);
 	__u64 ctx_len = ctx_full_len(ctx);
-	__u64 cap_len = min_t(__u64, monitor ? : TRACE_PAYLOAD_LEN,
-			      ctx_len);
+	__u64 cap_len = min_t(__u64, monitor ? : payload_len, ctx_len);
 	struct ratelimit_key rkey = {
 		.usage = RATELIMIT_USAGE_EVENTS_MAP,
 	};
@@ -287,9 +287,9 @@ send_trace_notify6(struct __ctx_buff *ctx, enum trace_point obs_point,
 		   __u16 dst_id, __u32 ifindex, enum trace_reason reason,
 		   __u32 monitor)
 {
+	__u64 payload_len = TRACE_PAYLOAD_LEN + (ctx_is_overlay(ctx) ? 50 : 0);
 	__u64 ctx_len = ctx_full_len(ctx);
-	__u64 cap_len = min_t(__u64, monitor ? : TRACE_PAYLOAD_LEN,
-			      ctx_len);
+	__u64 cap_len = min_t(__u64, monitor ? : payload_len, ctx_len);
 	struct ratelimit_key rkey = {
 		.usage = RATELIMIT_USAGE_EVENTS_MAP,
 	};

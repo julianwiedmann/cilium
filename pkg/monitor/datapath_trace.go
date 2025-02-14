@@ -30,7 +30,8 @@ const (
 const (
 	// TraceNotifyFlagIsIPv6 is set in TraceNotify.Flags when the
 	// notification refers to an IPv6 flow
-	TraceNotifyFlagIsIPv6 uint8 = 1
+	TraceNotifyFlagIsIPv6     uint8 = 1
+	TraceNotifyFlagsIsOverlay uint8 = 2
 )
 
 const (

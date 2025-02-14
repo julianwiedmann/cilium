@@ -145,7 +145,8 @@ struct trace_notify {
 	__u16		dst_id;
 	__u8		reason;
 	__u8		ipv6:1;
-	__u8		pad:7;
+	__u8		overlay:1;
+	__u8		pad:6;
 	__u32		ifindex;
 	union {
 		struct {
@@ -228,6 +229,7 @@ _send_trace_notify(struct __ctx_buff *ctx, enum trace_point obs_point,
 		.dst_id		= dst_id,
 		.reason		= reason,
 		.ifindex	= ifindex,
+		.overlay	= ctx_is_overlay(ctx),
 	};
 	memset(&msg.orig_ip6, 0, sizeof(union v6addr));
 
@@ -273,6 +275,7 @@ send_trace_notify4(struct __ctx_buff *ctx, enum trace_point obs_point,
 		.reason		= reason,
 		.ifindex	= ifindex,
 		.ipv6		= 0,
+		.overlay	= ctx_is_overlay(ctx),
 		.orig_ip4	= orig_addr,
 	};
 
@@ -319,6 +322,7 @@ send_trace_notify6(struct __ctx_buff *ctx, enum trace_point obs_point,
 		.reason		= reason,
 		.ifindex	= ifindex,
 		.ipv6		= 1,
+		.overlay	= ctx_is_overlay(ctx),
 	};
 
 	ipv6_addr_copy(&msg.orig_ip6, orig_addr);

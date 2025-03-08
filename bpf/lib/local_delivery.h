@@ -44,6 +44,18 @@ static __always_inline int redirect_ep(struct __ctx_buff *ctx __maybe_unused,
 	return ctx_redirect_peer(ctx, ifindex, 0);
 }
 
+static __always_inline void
+local_delivery_fill_meta(struct __ctx_buff *ctx, __u32 seclabel,
+			 bool delivery_redirect, bool from_host,
+			 bool from_tunnel, __u32 cluster_id)
+{
+	ctx_store_meta(ctx, CB_SRC_LABEL, seclabel);
+	ctx_store_meta(ctx, CB_DELIVERY_REDIRECT, delivery_redirect ? 1 : 0);
+	ctx_store_meta(ctx, CB_FROM_HOST, from_host ? 1 : 0);
+	ctx_store_meta(ctx, CB_FROM_TUNNEL, from_tunnel ? 1 : 0);
+	ctx_store_meta(ctx, CB_CLUSTER_ID_INGRESS, cluster_id);
+}
+
 static __always_inline int
 local_delivery(struct __ctx_buff *ctx, __u32 seclabel,
 	       __u32 magic __maybe_unused,
@@ -99,12 +111,7 @@ local_delivery(struct __ctx_buff *ctx, __u32 seclabel,
 #else
 
 	/* Jumps to destination pod's BPF program to enforce ingress policies. */
-	ctx_store_meta(ctx, CB_SRC_LABEL, seclabel);
-	ctx_store_meta(ctx, CB_DELIVERY_REDIRECT, 1);
-	ctx_store_meta(ctx, CB_FROM_HOST, from_host ? 1 : 0);
-	ctx_store_meta(ctx, CB_FROM_TUNNEL, from_tunnel ? 1 : 0);
-	ctx_store_meta(ctx, CB_CLUSTER_ID_INGRESS, cluster_id);
-
+	local_delivery_fill_meta(ctx, seclabel, true, from_host, from_tunnel, cluster_id);
 	return tail_call_policy(ctx, ep->lxc_id);
 #endif
 }

@@ -38,7 +38,6 @@
 #include "lib/trace.h"
 #include "lib/identity.h"
 #include "lib/l3.h"
-#include "lib/l4.h"
 #include "lib/drop.h"
 #include "lib/encap.h"
 #include "lib/lb.h"

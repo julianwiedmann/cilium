@@ -14,6 +14,7 @@
 #include "bpf/compiler.h"
 #include "common.h"
 #include "drop.h"
+#include "l4.h"
 #include "signal.h"
 #include "conntrack.h"
 #include "conntrack_map.h"

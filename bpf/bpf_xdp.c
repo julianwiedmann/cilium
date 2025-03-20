@@ -40,6 +40,7 @@
 #undef ENABLE_HEALTH_CHECK
 
 #include "lib/common.h"
+#include "lib/l4.h"
 #include "lib/maps.h"
 #include "lib/eps.h"
 #include "lib/events.h"

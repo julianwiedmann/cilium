@@ -6,6 +6,8 @@
 #include <bpf/ctx/ctx.h>
 #include <bpf/api.h>
 
+#include "l4.h"
+
 struct capture_rule {
 	__u16 rule_id;
 	__u16 reserved;

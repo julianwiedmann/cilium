@@ -10,7 +10,7 @@
 #include "eth.h"
 #include "dbg.h"
 #include "trace.h"
-#include "l4.h"
+#include "l3.h"
 
 /** Redirect to the proxy by hairpinning the packet out the incoming
  *  interface.

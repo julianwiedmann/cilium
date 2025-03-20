@@ -12,7 +12,6 @@
 #include "dbg.h"
 #include "l4.h"
 #include "icmp6.h"
-#include "csum.h"
 #include "token_bucket.h"
 
 #ifdef ENABLE_IPV6

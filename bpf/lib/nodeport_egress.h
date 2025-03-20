@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "nat.h"
 #include "nodeport.h"
 
 #ifdef ENABLE_NODEPORT

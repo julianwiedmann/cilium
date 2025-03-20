@@ -47,7 +47,6 @@
 #include "lib/srv6.h"
 #include "lib/encap.h"
 #include "lib/eps.h"
-#include "lib/nat.h"
 #include "lib/fib.h"
 #include "lib/nodeport.h"
 #include "lib/policy_log.h"

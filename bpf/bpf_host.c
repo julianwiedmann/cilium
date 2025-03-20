@@ -41,7 +41,6 @@
 #include "lib/l4.h"
 #include "lib/drop.h"
 #include "lib/encap.h"
-#include "lib/nat.h"
 #include "lib/lb.h"
 #include "lib/nodeport.h"
 #include "lib/nodeport_egress.h"
